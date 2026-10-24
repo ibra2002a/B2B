@@ -1,11 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { refreshSession } from '@/lib/supabase/proxy';
+import { missingPublicSettings } from '@/lib/config-status';
 
 // Routes that need a signed-in user. This is a convenience redirect only:
 // every page and action checks the role again, and the database enforces access.
 const PROTECTED_PREFIXES = ['/account', '/checkout', '/orders', '/supplier', '/admin'];
 
 export async function proxy(request: NextRequest) {
+  // Without Supabase settings the layout shows the setup screen; skip session handling.
+  if (missingPublicSettings().length > 0) {
+    return NextResponse.next();
+  }
   const { response, user } = await refreshSession(request);
   const { pathname, search } = request.nextUrl;
 
